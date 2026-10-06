@@ -22,7 +22,9 @@ export async function verificarSaudeSupabase(): Promise<{ auth: SaudeServico; ba
   const t0 = performance.now();
   let auth: SaudeServico;
   try {
-    const resp = await fetch(`${supabaseUrl}/auth/v1/health`, { headers: { apikey: supabaseKey } });
+    const headers: Record<string, string> = {};
+    if (supabaseKey) headers.apikey = supabaseKey;
+    const resp = await fetch(`${supabaseUrl}/auth/v1/health`, { headers });
     auth = {
       ok: resp.ok,
       latencia_ms: Math.round(performance.now() - t0),

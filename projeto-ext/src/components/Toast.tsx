@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
 
-type TomToast = 'ok' | 'warn' | 'err';
+export type TomToast = 'ok' | 'warn' | 'err' | 'info';
 interface ToastItem {
   id: number;
   tom: TomToast;
@@ -27,7 +27,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div className="toasts" role="status" aria-live="polite">
         {itens.map((i) => (
           <div key={i.id} className={`toast ${i.tom}`}>
-            {i.tom === 'ok' ? <CheckCircle2 size={18} /> : i.tom === 'warn' ? <AlertTriangle size={18} /> : <XCircle size={18} />}
+            {i.tom === 'ok' ? (
+              <CheckCircle2 size={18} />
+            ) : i.tom === 'warn' ? (
+              <AlertTriangle size={18} />
+            ) : i.tom === 'info' ? (
+              <Info size={18} />
+            ) : (
+              <XCircle size={18} />
+            )}
             <span>{i.texto}</span>
           </div>
         ))}

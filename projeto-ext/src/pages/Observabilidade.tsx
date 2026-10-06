@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Activity, RefreshCw, Trash2, Search, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { RefreshCw, Trash2, Search, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { useEventos, limparEventos, calcularMetricasConsulta, type NivelLog, type OrigemLog } from '../services/observability';
 import { verificarSaudeSupabase, type SaudeServico } from '../services/supabaseClient';
 import { dataCompleta } from '../lib/format';

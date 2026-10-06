@@ -263,6 +263,7 @@ tbody tr.clickable:hover td { background: #fafbfc; }
 .toast.ok svg { color: #4ade80; }
 .toast.err svg { color: #f87171; }
 .toast.warn svg { color: #fbbf24; }
+.toast.info svg { color: #60a5fa; }
 
 /* ── Login ──────────────────────────────────────────────── */
 .login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
