@@ -1,75 +1,88 @@
-# React + TypeScript + Vite
+# Sistema de Auxílio à Logística | Fertipar
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema corporativo para **validação prévia obrigatória de carregamentos** de fertilizantes a granel e ensacados. O sistema atua de forma desacoplada do ERP legado da fábrica para garantir:
+1. **Correspondência rigorosa de tonelagem** entre a cota contratada/programada e a ordem emitida para o caminhão.
+2. **Regularidade cadastral e fiscal (Sintegra/SEFAZ)** do cliente em tempo real (&le; 5 segundos) antes de autorizar a entrada do veículo na baia de carregamento.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 1. Perfis de Acesso & Credenciais de Demonstração
 
-## React Compiler
+O sistema conta com **autenticação real (Supabase Auth)** e controle estrito de permissões baseado em funções corporativas. A função é armazenada de forma segura em `app_metadata.role`, impossibilitando qualquer elevação de privilégio pelo lado do cliente.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Perfil | Usuário (E-mail) | Senha | Escopo de Acesso |
+| :--- | :--- | :--- | :--- |
+| **Administrador** | `admin@sal-logistica.app` | `NY5bWUxC7ndqav` | Acesso irrestrito a todas as visões (Portaria, Contratos, Ordens) + Painel exclusivo de **Observabilidade & Auditoria**. |
+| **Logística** | `logistica@sal-logistica.app` | `FabDGX95UviVEQ` | **Exclusivo da Portaria:** Fila de carregamento, conferência de peso/placa, checagem fiscal em &le; 5s e liberação de veículos. |
+| **Comercial** | `comercial@sal-logistica.app` | `vwMNfdyE3cZe9p` | **Exclusivo de Vendas:** Gestão de contratos-mãe, emissão de ordens por veículo e retificação/ressubmissão de ordens retidas. |
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 2. Padrões de Design e Segurança
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+* **Design Corporativo e Limpo:** Interface enxuta e focada em produtividade operacional, baseada em tipografia Inter, superfícies neutras, drawers de detalhamento e badges informativos.
+* **Isolamento de Credenciais:** A chave de serviço (`SECRET_KEY`) é de uso estrito administrativo/backend e foi totalmente excluída do bundle do navegador (`vite.config.ts`), expondo apenas `PUBLISHABLE_KEY` e `SUPABASE_URL`.
+* **Zero Vazamento Técnico:** A interface não expõe termos internos de desenvolvimento, nomes de provedores de infraestrutura ou botões de teste sintéticos.
+* **Política Fail-Safe Fiscal:** Em caso de oscilação ou indisponibilidade na consulta pública do Sintegra, o sistema classifica a consulta como `INDETERMINADO` (cadastro não confirmado), mantendo a carga retida por precaução e evitando falso-positivo fiscal.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 3. Funcionalidades por Módulo
 
+### A. Fila de Carregamento (Logística & Administrador)
+* Visualização dos veículos aguardando na portaria da fábrica.
+* Filtros rápidos por situação: *Aguardando conferência*, *Retidas* e *Liberadas*.
+* Abertura de gaveta lateral com raio-x da ordem (dados do motorista, cavalo/carreta, transportadora e histórico de eventos).
+* Botão **Conferir e Liberar**: executa conferência cruzada de tonelagem e consulta cadastral do CNPJ/IE na SEFAZ.
+
+### B. Contratos de Cooperativas (Comercial & Administrador)
+* Gestão dos pedidos-mãe firmados com cooperativas agrícolas (ex.: Coamo, Cocamar, C.Vale).
+* Barras de progresso com saldo disponível para faturamento.
+* Ação de **Emitir Ordem** vinculada ao contrato com validação de limite de saldo.
+
+### C. Ordens & Retenções (Comercial & Administrador)
+* Acompanhamento das ordens emitidas e tratamento de divergências.
+* **Fluxo de Ressubmissão:** Quando a portaria detecta divergência de tonelagem, o analista comercial ajusta a quantidade, insere a justificativa e reenvia a ordem diretamente para reavaliação da logística.
+
+### D. Observabilidade & Auditoria (Exclusivo Administrador)
+* **Saúde dos Serviços:** Verificação em tempo real da disponibilidade e latência do serviço de autenticação e do banco relacional PostgreSQL.
+* **Métricas de Conformidade:** Total de consultas, taxa de sucesso, latência média e percentual de atendimento à meta de tempo (&le; 5,0s).
+* **Trilha de Auditoria:** Registro cronológico de logins, consultas fiscais, emissões e autorizações de carregamento com filtro por nível (info, warn, error) e módulo.
+
+---
+
+## 4. Estrutura do Projeto
+
+```text
+projeto-ext/
+├── scripts/
+│   └── seed-users.mjs          # Script de provisionamento das contas no Supabase
+├── src/
+│   ├── components/             # Shell corporativo, gavetas, modais e feedback toast
+│   ├── data/                   # Massa inicial realista com CNPJs reais de cooperativas
+│   ├── lib/                    # Formatadores de moeda, tonelagem e datas
+│   ├── pages/                  # Login, Fila, Contratos, OrdensComercial, Observabilidade
+│   ├── services/               # Auth, Consulta CNPJ/Sintegra, DataService e Observability
+│   ├── types/                  # Definições de domínio e tipos TypeScript
+│   ├── App.tsx                 # Roteamento baseado em função de usuário
+│   └── index.css               # Design system corporativo enxuto
+├── supabase-schema.sql         # Esquema relacional das tabelas com RLS
+└── vite.config.ts              # Configuração Vite com proteção de variáveis de ambiente
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 5. Como Executar Localmente
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# 1. Navegue até o diretório da aplicação
+cd projeto-ext
 
+# 2. Instale as dependências (caso necessário)
+npm install
+
+# 3. Inicie o servidor de desenvolvimento
+npm run dev
 ```
+
+Acesse no navegador: **`http://localhost:5173/`**
